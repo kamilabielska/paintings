@@ -1,3 +1,4 @@
+-f https://download.pytorch.org/whl/torch_stable.html
 Brotli==1.0.9
 certifi==2021.5.30
 click==8.0.1
@@ -19,8 +20,8 @@ Pillow==8.3.1
 plotly==5.1.0
 six==1.16.0
 tenacity==8.0.1
-torch==1.9.0
-torchvision==0.10.0
+torch==1.8.1+cpu 
+torchvision==0.9.1+cpu
 typing-extensions==3.10.0.0
 Werkzeug==2.0.1
 wincertstore==0.2
