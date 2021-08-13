@@ -1,0 +1,4 @@
+whopaintedthat
+*.pyc
+.DS_Store
+.env
