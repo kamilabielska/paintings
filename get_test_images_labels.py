@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import pickle
+import requests
 
 classes12 = ['Salvador Dali', 'Vincent van Gogh', 'Raphael', 'Leonardo da Vinci',
              'Rembrandt', 'Pablo Picasso', 'Francisco Goya', 'Peter Paul Rubens',
@@ -11,6 +12,8 @@ most_common = df[['name','paintings']].sort_values('paintings', ascending=False)
 classes15 = list(most_common.reset_index(drop=True).str.replace('Dürer', 'Durer')) 
 classes50 = list(df['name'].str.replace('Dürer', 'Durer'))
 
+url = 'https://raw.githubusercontent.com/kamilabielska/paintings/main'
+
 if not os.path.exists('test info'):
     os.makedirs('test info')
     
@@ -19,9 +22,9 @@ for classes in [classes12, classes15, classes50]:
     n = str(len(classes))
     
     for folder in classes:
-        folder_path = os.path.join('test', folder)
+        folder_path = '/'.join(['test', folder])
         for filename in os.listdir(folder_path):
-            test_images.append(os.path.join(folder_path, filename))
+            test_images.append('/'.join([url, folder_path, filename]))
             test_labels.append(folder)
             
     with open(os.path.join('test info', 'test_images_'+n), 'wb') as file:

@@ -7,17 +7,17 @@ import dash_core_components as dcc
 import dash_bootstrap_components as dbc
 import dash_html_components as html
 import plotly.graph_objects as go
+import requests
 
 from dash.dependencies import Input, Output, State
 from torchvision import transforms
 from PIL import Image
-from whitenoise import WhiteNoise
+from io import BytesIO
 from model_class import ResModel
 
 app = dash.Dash(__name__, update_title=None)
 app.title = 'who painted that?'
 server = app.server
-server.wsgi_app = WhiteNoise(server.wsgi_app, root='static')
 
 nclasses = 12
 
@@ -225,7 +225,8 @@ def confirm_choice(confirm_button, next_button, drop_input, ypoints, npoints, co
         real = test_labels[which[n]]
 
         with torch.no_grad():
-            image_raw = Image.open(test_images[which[n]]).convert('RGB')
+            response = requests.get(test_images[which[n]])
+            image_raw = Image.open(BytesIO(response.content)).convert('RGB')
             image = transformation(image_raw)
             pred = np.argmax(model(image.view(1, 3, 224, 224)))
 
@@ -257,7 +258,8 @@ def load_next_image(n_clicks1, n_clicks2, counter, ypoints, npoints, message, wi
     
     if n >= n_instances:
         button_id = dash.callback_context.triggered[0]['prop_id'].split('.')[0]
-        image_raw = Image.open(test_images[which[n-1]]).convert('RGB')
+        response = requests.get(test_images[which[n-1]])
+        image_raw = Image.open(BytesIO(response.content)).convert('RGB')
         fig = display_image(image_raw, height=height, width=width)
         card_state = False if button_id == 'end-button' else True
         
@@ -271,7 +273,8 @@ def load_next_image(n_clicks1, n_clicks2, counter, ypoints, npoints, message, wi
         return fig, '/'.join([str(n), str(n_instances)]), None, card_state, True, end_message
         
     else:
-        image_raw = Image.open(test_images[which[n]]).convert('RGB')
+        response = requests.get(test_images[which[n]])
+        image_raw = Image.open(BytesIO(response.content)).convert('RGB')
         fig = display_image(image_raw, height=height, width=width)
         return fig, '/'.join([str(n+1), str(n_instances)]), None, False, False, message
 
