@@ -25,15 +25,14 @@ filename = {12:'model_resnet50_12_8956.pth',
             15:'model_resnet50_15_9212.pth',
             50:'model_resnet50_8178.pth'}
     
-test_images = pickle.load(open(os.path.join('test info','test_images_'+str(nclasses)),'rb'))
-test_labels = pickle.load(open(os.path.join('test info','test_labels_'+str(nclasses)),'rb'))
+test_images = pickle.load(open(os.path.join('arrays','test_images_'+str(nclasses)),'rb'))
+test_labels = pickle.load(open(os.path.join('arrays','test_labels_'+str(nclasses)),'rb'))
+which = pickle.load(open(os.path.join('arrays','which_'+str(nclasses)),'rb'))
         
 unique = sorted(list(set(test_labels)))
 options = [{'label': x, 'value': x} for x in unique]
 
 n_instances = len(test_images)
-which = np.arange(n_instances)
-np.random.shuffle(which)
 
 model = ResModel(nclasses)
 model.load_state_dict(torch.load(filename[nclasses], map_location=torch.device('cpu')))
