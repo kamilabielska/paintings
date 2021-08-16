@@ -11,11 +11,13 @@ import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
 from torchvision import transforms
 from PIL import Image
+from whitenoise import WhiteNoise
 from model_class import ResModel
 
 app = dash.Dash(__name__, update_title=None)
 app.title = 'who painted that?'
 server = app.server
+server.wsgi_app = WhiteNoise(server.wsgi_app, root='static/')
 
 nclasses = 12
 
