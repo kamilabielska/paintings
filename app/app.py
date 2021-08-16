@@ -15,6 +15,7 @@ from model_class import ResModel
 
 app = dash.Dash(__name__, update_title=None)
 app.title = 'who painted that?'
+server = app.server
 
 nclasses = 12
 
