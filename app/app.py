@@ -19,6 +19,8 @@ app = dash.Dash(__name__, update_title=None)
 app.title = 'who painted that?'
 server = app.server
 
+
+## PREPARE THE DATA AND THE MODEL
 nclasses = 12
 
 filename = {12:'model_resnet50_12_8956.pth',
@@ -42,8 +44,10 @@ transformation = transforms.Compose([
     transforms.Resize(256),
     transforms.CenterCrop(224),
     transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406],
-                         [0.229, 0.224, 0.225])
+    transforms.Normalize(
+        [0.485, 0.456, 0.406],
+        [0.229, 0.224, 0.225]
+    )
 ])
     
 def display_image(image_raw, width=590, height=525):
@@ -94,95 +98,216 @@ def display_image(image_raw, width=590, height=525):
     
     return fig
 
-you = dbc.Card([
-        dbc.CardHeader('you', style={'textAlign': 'center',
-                                    'padding': '4px 0px 4px 0px'}),
-        dbc.CardBody([html.P('0', id='your-points', style={'textAlign': 'center',
-                                                           'fontSize': '28px',
-                                                           'paddingBottom': '0px',
-                                                           'marginBottom': '0px'})],
-                    style={'padding': '0px 0px 0px 0px'})
-])
+blank_image = display_image(Image.new('RGB', (50, 50), (255, 255, 255)))
 
-network = dbc.Card([
-    dbc.CardHeader('neural network', style={'textAlign': 'center',
-                                     'padding': '4px 0px 4px 0px'}),
-    dbc.CardBody([html.P('0', id='network-points', style={'textAlign': 'center',
-                                                          'fontSize': '28px',
-                                                          'paddingBottom': '0px',
-                                                          'marginBottom': '0px'})],
-                    style={'padding': '0px 0px 0px 0px'})
-])
 
-summary_text = "**your choice**: {}\n**network's choice**: {}\n**author of the artwork**: {}"
+## SCOREBOARD
+def create_score_card(title, id_text):
 
-main_container = dbc.Card([
-    html.H3('who painted that?', style={'textAlign': 'left', 'marginBottom': '20px'}),
-    dcc.Dropdown(options=options, id='dropdown', placeholder='select an artist', style={'marginBottom': '5px'}),
-    dbc.Button('confirm', id='confirm-button', color='primary', block=True, style={'marginBottom': '25px'}),
-    dcc.Markdown(summary_text.format('','',''),
-                 id='summary', style={'whiteSpace': 'pre-wrap'}),
-    dbc.Button('next artwork', id='next-button', color='primary', style={'marginTop': '15px',
-                                                                         'display': 'inline-block',
-                                                                         'width': '30%',
-                                                                         'margin':'auto'}),
-    html.P('0/'+str(n_instances), id='counter', style={'paddingTop': '5px',
-                                                       'paddingBottom': '15px',
-                                                       'display': 'inline-block',
-                                                       'margin':'auto'})
-], body=True, style={'marginBottom': '5px',
-                     'paddingLeft': '7%',
-                     'paddingRight': '7%',
-                     'height': '65%',
-                     'backgroundColor': '#E8E8E8'})
+        card = dbc.Card([
+            dbc.CardHeader(
+                title,
+                style={
+                    'textAlign': 'center',
+                    'padding': '4px 0px 4px 0px'
+                }
+            ),
+            dbc.CardBody([
+                html.P(
+                    '0',
+                    id=id_text,
+                    style={
+                        'textAlign': 'center',
+                        'fontSize': '28px',
+                        'paddingBottom': '0px',
+                        'marginBottom': '0px'
+                    }
+                )
+            ],
+                style={'padding': '0px 0px 0px 0px'}
+            )
+        ])
+        
+        return card
+
+you = create_score_card('you', 'your-points')
+network = create_score_card('neural network', 'network-points')
 
 scoreboard_container = dbc.Card([
         html.Div([
-        html.H3('scoreboard', style={'textAlign': 'center'}),
-        dbc.Row([
-            dbc.Col(you, width=4, style={'paddingRight': '2px'}),
-            dbc.Col(network, width=4, style={'paddingLeft': '2px'})
-        ], justify='center', align='center')
-        ], style={'display': 'inline-block',
-                  'marginTop':'auto',
-                  'marginBottom':'auto'})
-], body=True, style={'height': '35%',
-                    'backgroundColor': '#E8E8E8'})
+            html.H3(
+                'scoreboard',
+                style={'textAlign': 'center'}
+            ),
+            dbc.Row([
+                dbc.Col(you, width=4, style={'paddingRight': '2px'}),
+                dbc.Col(network, width=4, style={'paddingLeft': '2px'})
+            ],
+                justify='center',
+                align='stretch'
+            )
+        ], 
+            style={
+                'display': 'inline-block',
+                'marginTop':'auto',
+                'marginBottom':'auto'
+            }
+        )
+], 
+    body=True,
+    style={
+        'height': '35%',
+        'backgroundColor': '#E8E8E8'
+    }
+)
 
+
+## MAIN PANEL
+summary_text = "**your choice**: {}\n**network's choice**: {}\n**author of the artwork**: {}"
+
+main_container = dbc.Card([
+    html.H3(
+        'who painted that?',
+        style={
+            'textAlign': 'left',
+            'marginBottom': '20px'
+        }
+    ),
+    dcc.Dropdown(
+        options=options,
+        id='dropdown',
+        placeholder='select an artist',
+        style={'marginBottom': '5px'}
+    ),
+    dbc.Button(
+        'confirm',
+        id='confirm-button',
+        color='primary',
+        block=True,
+        style={'marginBottom': '25px'}
+    ),
+    dcc.Markdown(
+        summary_text.format('','',''),
+        id='summary',
+        style={'whiteSpace': 'pre-wrap'}
+    ),
+    dbc.Button(
+        'next artwork',
+        id='next-button',
+        color='primary',
+        style={
+            'marginTop': '15px',
+            'display': 'inline-block',
+            'width': '35%',
+            'margin':'auto'
+        }
+    ),
+    html.P(
+        '0/'+str(n_instances),
+        id='counter',
+        style={
+            'paddingTop': '5px',
+            'paddingBottom': '15px',
+            'display': 'inline-block',
+            'margin':'auto'
+        }
+    )
+],
+    body=True,
+    style={
+        'marginBottom': '5px',
+        'paddingLeft': '7%',
+        'paddingRight': '7%',
+        'height': '65%',
+        'backgroundColor': '#E8E8E8'
+    }
+)
+
+
+## WELCOME AND THE END CARDS
 welcome_card = dbc.Modal([
     dbc.ModalHeader('Welcome'),
-    dbc.ModalBody("Try your luck (or knowledge) against a neural network and see who is better at guessing the authors of presented artworks. Choose artist's name from the list and press 'confirm'. Every right guess is worth 1 point."),
+    dbc.ModalBody(
+        "Try your luck (or knowledge) against a neural network and see who is "+
+        "better at guessing the authors of presented artworks. Choose artist's "+
+        "name from the list and press 'confirm'. Every right guess is worth 1 point."
+    ),
     dbc.ModalFooter(
-        dbc.Button("Let's go", id='close-button', className='ml-auto', n_clicks=0, style={'display': 'inline-block',
-                                                                                          'margin': 'auto'})
-                ),
-], id="welcome-card", is_open=True, centered=True)
+        dbc.Button(
+            "Let's go!",
+            id='close-button',
+            className='ml-auto',
+            n_clicks=0,
+            style={
+                'display': 'inline-block',
+                'margin': 'auto'
+            }
+        )
+    ),
+], 
+    id='welcome-card',
+    is_open=True,
+    centered=True
+)
 
 the_end = dbc.Modal([
     dbc.ModalHeader('The end'),
-    dbc.ModalBody('You made it to the end, congrats!', id='end-message'),
+    dbc.ModalBody(
+        'You made it to the end, congrats!',
+        id='end-message'
+    ),
     dbc.ModalFooter(
-        dbc.Button('close', id='end-button', className='ml-auto', n_clicks=0, style={'display': 'inline-block',
-                                                                                     'margin': 'auto'})
-                ),
-], id="the-end-card", is_open=False, centered=True)
+        dbc.Button(
+            'close',
+            id='end-button',
+            className='ml-auto',
+            n_clicks=0,
+            style={
+                'display': 'inline-block',
+                'margin': 'auto'
+            }
+        )
+    ),
+],
+    id='the-end-card',
+    is_open=False,
+    centered=True
+)
 
+
+## LAYOUT
 app.layout = html.Div([
     dbc.Row([
         welcome_card,
         dbc.Col([
-            dcc.Graph(figure=display_image(Image.new('RGB', (50, 50), (255, 255, 255))), id='image')
+            dcc.Graph(
+                figure=blank_image,
+                id='image',
+                config={'doubleClick': 'autosize'},
+                style={'width': '100%'}
+            )
         ], width=6),
         dbc.Col([
             main_container,
             scoreboard_container,
         ], width=5),
         the_end
-    ], justify='center'),
+    ], 
+        justify='center'
+    ),
     dcc.Location(id='url'),
-    html.Div(children='1366 657', id='window-size', hidden=True, style={'display':'none'})
-], style={'margin': '3% 7% 3% 7%'})
+    html.Div(
+        children='1366 657',
+        id='window-size',
+        hidden=True,
+        style={'display':'none'}
+    )
+], 
+    style={'margin': '3% 7% 3% 7%'}
+)
 
+
+## CALLBACKS 
 app.clientside_callback(
     """
     function(href) {
@@ -206,16 +331,18 @@ def close_welcome_card(n_clicks):
     else:
         return True
 
-@app.callback(Output('summary', 'children'),
-              Output('your-points', 'children'),
-              Output('network-points', 'children'),
-              Input('confirm-button', 'n_clicks'),
-              Input('next-button', 'n_clicks'),
-              State('dropdown', 'value'),
-              State('your-points', 'children'),
-              State('network-points', 'children'),
-              State('counter', 'children'),
-              prevent_initial_call=True)
+@app.callback(
+    Output('summary', 'children'),
+    Output('your-points', 'children'),
+    Output('network-points', 'children'),
+    Input('confirm-button', 'n_clicks'),
+    Input('next-button', 'n_clicks'),
+    State('dropdown', 'value'),
+    State('your-points', 'children'),
+    State('network-points', 'children'),
+    State('counter', 'children'),
+    prevent_initial_call=True
+)
 def confirm_choice(confirm_button, next_button, drop_input, ypoints, npoints, counter):
     button_id = dash.callback_context.triggered[0]['prop_id'].split('.')[0]
     
@@ -237,22 +364,25 @@ def confirm_choice(confirm_button, next_button, drop_input, ypoints, npoints, co
     elif button_id == 'next-button':
         return summary_text.format('', '', ''), ypoints, npoints
 
-@app.callback(Output('image', 'figure'),
-              Output('counter', 'children'),
-              Output('dropdown', 'value'),
-              Output('the-end-card', 'is_open'),
-              Output('next-button', 'disabled'),
-              Output('end-message', 'children'),
-              Input('next-button', 'n_clicks'),
-              Input('end-button', 'n_clicks'),
-              State('counter', 'children'),
-              State('your-points', 'children'),
-              State('network-points', 'children'),
-              State('end-message', 'children'),
-              State('window-size', 'children'))
+@app.callback(
+    Output('image', 'figure'),
+    Output('counter', 'children'),
+    Output('dropdown', 'value'),
+    Output('the-end-card', 'is_open'),
+    Output('next-button', 'disabled'),
+    Output('end-message', 'children'),
+    Input('next-button', 'n_clicks'),
+    Input('end-button', 'n_clicks'),
+    State('counter', 'children'),
+    State('your-points', 'children'),
+    State('network-points', 'children'),
+    State('end-message', 'children'),
+    State('window-size', 'children')
+)
 def load_next_image(n_clicks1, n_clicks2, counter, ypoints, npoints, message, window):
     n = int(counter.split('/')[0])
     w, h = window.split(' ')
+    print(w, h)
     width, height = int(w)/2 - 0.08*int(w), int(h) - 0.2*int(h)
     
     if n >= n_instances:
@@ -277,11 +407,13 @@ def load_next_image(n_clicks1, n_clicks2, counter, ypoints, npoints, message, wi
         fig = display_image(image_raw, height=height, width=width)
         return fig, '/'.join([str(n+1), str(n_instances)]), None, False, False, message
 
-@app.callback(Output('confirm-button', 'disabled'),
-              Input('next-button', 'n_clicks'),
-              Input('confirm-button', 'n_clicks'),
-              State('counter', 'children'),
-              prevent_initial_call=True)
+@app.callback(
+    Output('confirm-button', 'disabled'),
+    Input('next-button', 'n_clicks'),
+    Input('confirm-button', 'n_clicks'),
+    State('counter', 'children'),
+    prevent_initial_call=True
+)
 def disable_confirm_button(next_button, confirm_button, counter):
     button_id = dash.callback_context.triggered[0]['prop_id'].split('.')[0]
     n = int(counter.split('/')[0])
@@ -295,6 +427,7 @@ def disable_confirm_button(next_button, confirm_button, counter):
         return True
     else:
         raise dash.exceptions.PreventUpdate
+        
 
 if __name__ == '__main__':
     app.run_server(debug=True)
